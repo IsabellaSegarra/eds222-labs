@@ -263,6 +263,7 @@ sf_community_gg <- read_csv(here::here("week 1", "data", "San_Francisco_Communit
 glimpse(sf_community_gg)
 
 ```
+
 ```{r}
 # Contingency table
 
@@ -271,10 +272,13 @@ sf_community_gg %>%
   count(Sector_General, Emissions_mtCO2e) 
 
 ```
+
 ```{r}
 # Bar plot (two)
 
 library(paletteer)
+
+library(here)
 
 sf_emissions_types <- ggplot(sf_community_gg, aes(Sector_General, fill = Emissions_mtCO2e)) + 
   geom_bar(fill = "#5d9e61") +
@@ -291,33 +295,14 @@ ggsave(plot = sf_emissions_types, here::here("week 1", "figs", "sf_emissions_typ
 
 "MexBrewer::Alacena"
 ```
-2-3 sentences about the data (where you got it from and what it represents) 
-A contingency table, bar plot, histogram, or scatterplot summarizing the data
-1-2 sentences interpreting the table/figure
 
-This data is from the San Francisco Community wide Greenhouse Gas Inventory. This program tracks greenhouse gas emissions to determine progress towards meeting the city's climate action goals. 
+2-3 sentences about the data (where you got it from and what it represents) A contingency table, bar plot, histogram, or scatterplot summarizing the data 1-2 sentences interpreting the table/figure
 
+This data is from the San Francisco Community wide Greenhouse Gas Inventory. This program tracks greenhouse gas emissions to determine progress towards meeting the city's climate action goals.
 
-```{r}
+The first graph shows the San Fransisco sectors and their corresponding commodity types. This graph displays which commodity types are most represented in each sector.
 
-  
-ggplot(sf_community_gg, aes(Sector_General, fill = Commodity_Type)) +
-   geom_bar() +
-   scale_fill_paletteer_c("pals::coolwarm") +
-     labs(x = "Sector type", 
-          title = "San Fransisco Emission Types") +
-   theme_minimal() +
-   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))+
-   scale_fill_paletteer_d(palette = "colorBlindness::Blue2OrangeRed14Steps") + 
-   theme(
-     legend.title = element_text(size = 5), 
-     legend.text = element_text(size = 5)) +
-theme(legend.key=element_blank(), legend.key.size=unit(4,"point")) +
-guides(colour=guide_legend(nrow=16)) 
-  
-scale_fill_paletteer_d(palette = "ggsci::default_gsea")
-
-```
+The second graph depicts the sectors that contribute the most greenhouse gas emissions. From the graph, you can see that
 
 ```{r}
 
@@ -329,13 +314,14 @@ sectors <- ggplot(sf_community_gg, aes(Sector_General, fill = Commodity_Type)) +
            title = "San Francisco Sector Types") +
     theme_minimal() +
   #scale_fill_paletteer_d(palette = "ggsci::lancet") +
-  scale_color_manual(values = my_palette) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))+
     theme(
       legend.title = element_text(size = 7), 
       legend.text = element_text(size = 6)) +
  theme(legend.key=element_blank(), legend.key.size=unit(4,"point")) +
  guides(colour=guide_legend(nrow=16)) 
+
+sectors
 
 ggsave(plot = sectors, here::here("week 1", "figs", "sf_sectors.png"))
 
@@ -351,9 +337,6 @@ ggplot(sf_community_gg, aes(x = Calendar_Year, y = Emissions_mtCO2e)) +
   #scale_fill_paletteer_d(palette = "MexBrewer::Alacena")
 ```
 
-
-
-
 ```{r}
 # Histogram 
 sf <- sf_community_gg %>% 
@@ -365,6 +348,7 @@ ggplot(sf, aes(Emissions_mtCO2e)) +
   ylim(0, 200)
 
 ```
+
 ```{r}
 # Scatterplot 
 
@@ -373,7 +357,6 @@ ggplot(sf_community_gg, aes(Quantity,Emissions_mtCO2e))+
   geom_smooth(method = "lm", color = "black")
 
 ```
-
 
 ## Finished?
 

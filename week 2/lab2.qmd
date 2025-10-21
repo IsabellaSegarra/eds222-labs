@@ -275,18 +275,27 @@ Read the data from the rreas.csv file and create a scatter plot relating fish ab
 
 ```{r}
 
-rreas_murres <- read_csv("data/rreas.csv")
+rreas_murres <- read_csv(here::here("week 2", "data/rreas.csv"))
+
+glimpse(rreas_murres)
 
 ```
 
 ```{r}
 #| label: q6
 
+# fish abundance index = a relative, standardized measurement of a fish population's size or biomass over time 
+
+ggplot(rreas_murres, aes(x= rreas_rockfish_index, y = comu_rockfish_diet)) +
+  geom_point() +
+  coord_flip()
 
 
 ```
 
 **Q6: Which variables did you choose for the x- and y-axis? What does this mean for the purpose of your model?**
+
+I chose the rockfish abundance as the predictor variable for the diet because the abundance of fish influences the available food for their diet.
 
 ### Fit the model
 
@@ -295,7 +304,11 @@ Fit a model that predicts the RREAS rockfish abundance index from the fraction o
 ```{r}
 #| eval: false
 
+# storm_mod <- lm(gage_ht ~ precip_wk_in, data = storm_data)
 
+rockfish_mod <- lm(rreas_rockfish_index ~ comu_rockfish_diet, data = rreas_murres)
+
+summary(rockfish_mod)
 
 ```
 
@@ -306,7 +319,17 @@ Find the $R^2$ value for your model.
 ```{r}
 #| label: q7
 
+# Different components needed to get R-squared 
 
+y_bar <- mean(rreas_murres$) # The overall mean
+x <- rreas_murres$precip_wk_in # the x values of all the points
+y_hat <- 3.9 + 2.2 * x
+SST <- sum((storm_data$gage_ht - y_bar)^2)
+SSE <- sum((storm_data$gage_ht - y_hat)^2)
+
+# What fraction of the variance in gage height have we explained using precipitation? 
+
+R2 <- (SST - SSE) / SST
 
 ```
 
