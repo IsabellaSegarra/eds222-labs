@@ -75,21 +75,19 @@ We want to know if the popsicle stick method works better for restoration than g
 
 ### Identify the test statistic
 
-**Q1: What is the appropriate test statistic for this question?**
-The test statistic is a difference in proportions. 
+**Q1: What is the appropriate test statistic for this question?** The test statistic is a difference in proportions.
 
 ### State your null and alternative hypotheses
 
 **Q2: What are your null and alternative hypotheses?**
 
-H0:There is no effect on restoration between the two restoration methods. 
+H0:There is no effect on restoration between the two restoration methods.
 
-HA: The popsicle stick method has a better effect on restoration. 
+HA: The popsicle stick method has a better effect on restoration.
 
 ### Calculate the observed test statistic
 
 **Q3: How would you calculate the test statistic *for the sample*?**
-
 
 ```{r}
 #| label: q3
@@ -104,15 +102,16 @@ props <- restoration %>%
 
 props
 
-# Difference of poroptions between gs and ps (your HA is better)
+# Difference of proportions between gs and ps (your HA is better)
 props$treat_prob[2] - props$treat_prob[1]
 
 # --the correct way --
 restoration_summary <- restoration %>% 
-  group_by(treatment) %>% 
+  group_by(treatment) %>% # group by 'treatment' 
   summarize(prop_success = sum(success)/n())
 
-restoration_summary$prop_success[2] - restoration_summary$prop_success[1]
+# Difference of proportions
+test_stat <- restoration_summary$prop_success[2] - restoration_summary$prop_success[1]
 
 ```
 
@@ -120,8 +119,7 @@ restoration_summary$prop_success[2] - restoration_summary$prop_success[1]
 
 This is the key part of a permutation test! Remember, our goal is to estimate the distribution of possible outcomes *under the null hypothesis*. To do that, we have to break the association between treatment and outcome.
 
-**Q4: What column should we shuffle to break the association between treatment and outcome?**
-Shuffle by 'treatment' column. 
+**Q4: What column should we shuffle to break the association between treatment and outcome?** Shuffle by 'treatment' column.
 
 **Q5: Fill in the following code to perform one permutation and calculate the test statistic.**
 
@@ -129,13 +127,17 @@ Shuffle by 'treatment' column.
 #| label: q5
 #| eval: false
 
-one_permutation <- restoration %>%
-  mutate(treatment = sample(treatment, size = length(treatment), replace = FALSE))
+# One perumutation = one shuffle with the sample() function
 
+one_permutation <- restoration %>%
+  mutate(treatment = sample(treatment, size = length(treatment), replace = FALSE)) #sample the length of treatment 
+
+# Look at the prop_success for the one permutation
 permutation_props <- one_permutation %>%
   group_by(treatment) %>%
   summarize(prop_success = sum(success / n()))
 
+# Get the sample statitisc for the one permutation
 permutation_diff_props <- permutation_props$prop_success[2] - permutation_props$prop_success[1]
 
 permutation_diff_props
@@ -177,7 +179,7 @@ null_distribution <- map_dbl(1:1000, permute) # this is the function itself,assu
 
 ggplot() +
   geom_histogram(aes(null_distribution)) + 
-geom_vline(xintercept = 0.1416667) # Add a vertical line 
+geom_vline(xintercept = test_stat) # Add a vertical line 
 
 ```
 
@@ -191,8 +193,7 @@ The p-value is *the probability of a test statistic [at least]{.underline} as ex
 #| label: q8
 #| eval: false
 
-p_val <- sum(null_distribution) >= obs_test/1000
-
+p_val <- sum(null_distribution > test_stat) / length(null_distribution)
 p_val
 
 ```
@@ -232,12 +233,29 @@ This is the key part of bootstrapping! Remember, our goal is to estimate the var
 #| label: q12
 #| eval: false
 
-one_bootstrap <- ??? %>% 
-  ??? %>% 
+one_bootstrap <- restoration 
+  group_by(treatment)%>% 
   mutate(??? = sample(???,
                       size = length(???),
                       replace = ???)) %>% 
   ungroup()
+  
+---
+# One perumutation = one shuffle with the sample() function
+
+one_permutation <- restoration %>%
+  mutate(treatment = sample(treatment, size = length(treatment), replace = FALSE)) #sample the length of treatment 
+
+# Look at the prop_success for the one permutation
+permutation_props <- one_permutation %>%
+  group_by(treatment) %>%
+  summarize(prop_success = sum(success / n()))
+
+# Get the sample statitisc for the one permutation
+permutation_diff_props <- permutation_props$prop_success[2] - permutation_props$prop_success[1]
+
+permutation_diff_props
+  
 
 ```
 
