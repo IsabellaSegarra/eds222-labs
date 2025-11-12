@@ -1,5 +1,53 @@
 ---
 title: "midterm-1-regrade"
 format: html
+format: 
+  pdf: default 
+  html: default
 ---
+
+# Question 5
+
+```{r}
+#| echo: FALSE
+
+# Simulate data
+set.seed(42)
+x <- 0:10
+y <- rnorm(10, mean = 10, sd = 0.3)
+data <- data.frame(x, y)
+```
+
+
+
+
+
+
+
+```{r}
+library(ggplot2)
+
+# Example data
+forest <- rep(c("Boreal", "Temperate", "Tropical"), each = 20)
+microbes <- rep(seq(0, 10, length.out = 20), 3)
+
+# Create linear model predictions
+beta0 <- 4; beta1 <- 3; beta2 <- 6
+beta3 <- 0.2; beta4 <- 0.3; beta5 <- 0.5
+
+decomp <- with(data.frame(forest, microbes),
+               ifelse(forest == "Boreal", beta0 + beta3 * microbes,
+               ifelse(forest == "Temperate", beta0 + beta1 + (beta3 + beta4) * microbes,
+                                         beta0 + beta2 + (beta3 + beta5) * microbes)))
+
+# Plot
+ggplot(data.frame(forest, microbes, decomp),
+       aes(x = microbes, y = decomp, color = forest)) +
+  geom_line(size = 1.2) +
+  labs(title = "Decomposition Rate ~ Forest Type × Microbes",
+       x = "Microbial Abundance",
+       y = "Predicted Decomposition Rate") +
+  theme_minimal()
+
+```
 

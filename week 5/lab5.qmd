@@ -182,7 +182,7 @@ print(p_val)
 
 **Q6: How does your p-value compare to a critical threshold** $\alpha=0.05$**? How would you interpret that?**
 
-The p-value is larger than the critical threshold, therefore we *fail* to reject the null hypothesis. The data is not consistent with the hypothesis that the popsicle stick method leads to more successful treatments. 
+The p-value is larger than the critical threshold, therefore we *fail* to reject the null hypothesis. The data is not consistent with the hypothesis that the popsicle stick method leads to more successful treatments.
 
 ### Confidence interval
 
@@ -222,6 +222,8 @@ The following questions walk you through the steps.
 
 **Q7: What is the appropriate test statistic for this question?**
 
+Difference in proportions.
+
 #### Calculate the standard error
 
 **Q8: Fill in the blanks below to calculate the standard error of the statistic**
@@ -234,17 +236,21 @@ Remember that the standard error is going to differ between hypothesis testing a
 #| label: q8
 #| eval: false
 
+# --QUESTION: why mean for p hat?--
+
 # Calculate the proportions of the two treatments
 # Let treatment 1 be "Garden staple"
-p_hat1 <- ???
+p_hat1 <- mean(restoration$success[restoration$treatment == "Garden staple"]) # pulling out just the success from the treatment column for garden staples 
 # Let treatment 2 be "Popsicle stick"
-p_hat2 <- ???
+p_hat2 <- mean(restoration$success[restoration$treatment == "Popsicle stick"])
 
 # n1 and n2 remain the same from before
 
 # Calculate standard error
-se_diff_props <- ???
+se_diff_props <- sqrt(p_hat1 * (1 - p_hat1) / n1 + p_hat2 * (1 - p_hat2) / n2)
 se_diff_props
+
+
 
 ```
 
@@ -277,12 +283,12 @@ If you wanted to shade in the middle 95% of the area in the figure above, `qnorm
 #| label: q9
 #| eval: false
 
-diff_props_ci <- qnorm(???, mean = ???, sd = ???)
+diff_props_ci <- qnorm(c(0.025, 0.975), mean = diff_props, sd = se_diff_props)
 diff_props_ci
 
 ```
 
-**Q10: How would you interpret this confidence interval**
+**Q10: How would you interpret this confidence interval** We are 95% confident the true difference in proportions falls between -0.06 and 0.34.
 
 ## Comparing mathematical and randomization approaches
 
