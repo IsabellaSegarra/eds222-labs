@@ -80,7 +80,7 @@ df <- read_csv(here::here("week 6", "drinking_water.csv"))
 | Column              | Meaning                 |
 |---------------------|-------------------------|
 | `pwsid`             | ID                      |
-| `pwsname`           | Associated name         |
+| `pwsname`           | public water system     |
 | `pctpov`            | \% Below poverty        |
 | `pcthisp`           | \% Hispanic             |
 | `health`            | health status           |
@@ -102,7 +102,7 @@ Figure 3: A scatter plot showing the correlation between *percent Hispanic* and 
 
 df %>% 
   group_by(pcthisp_bin) %>% 
-  summarize(prop_dist = mean(violation, na.rm = TRUE)) %>% 
+  summarize(prop_dist = mean(violation, na.rm = TRUE)) %>%  #find the proportion of violations
   ggplot(aes(pcthisp_bin, prop_dist)) +
   geom_point() +
   labs(title = "Proportions of districts with SDWA violations in each % Hispanic Bin") +
@@ -149,6 +149,9 @@ Let's begin by investigating class in isolation. **Fit a logistic model to see h
 #| label: fit-model-class
 
 
+class_model <- glm(violation ~ pctpov, # glm(response ~ predictor)
+                   data = df, # data remains unchanged
+                   family = binomial(link = "logit")) # family and link function 
 
 ```
 
@@ -156,11 +159,35 @@ Just as we did with linear regression, you can inspect coefficient estimates, p-
 
 **What is the best estimate for the % Below Poverty coefficient?**
 
+```{r}
+#| label: best estimate
+
+glm_sum <- summary(class_model)
+coef_pctpov <- glm_sum$coefficients[2]
+
+# Another way with coef function: coef(class_model)["pctpov"] 
+
+print(coef_pctpov)
+
+```
+
 **Is the coefficient significantly different than 0? Assume critical threshold of 0.05.**
+
+Since this coefficient is less than 0.05, it is significantly different.
 
 **What is the 95% CI for the coefficient?**
 
+```{r}
+#| label: 95% CI 
+
+print(confint(class_model)["pctpov", ])
+
+
+```
+
 **Based on the sign, what is the relationship between class and SDWA violations?**
+
+Sign is ***positive***, so a positive association between class and SDWA violations.
 
 ## Make predictions
 
@@ -185,6 +212,16 @@ I use `expand_grid()` instead of `tibble()` when making the data frame of predic
 ```{r}
 #| label: predict-class-model
 
+# A grid of predictors to generate predictions for
+pred_grid <- expand_grid(pctpov = 0:100) # expand_grid is similar to tibble 
+
+# Generate predictions 
+class_model_pred <- pred_grid %>% 
+  mutate(p = predict(object = class_model, # glm
+                     newdata = pred_grid, # expand grid data
+                     type = "response")) # response = output of predictions (probability), link = look at raw predictions
+# response= looking at p, #link = looking at logit(p)
+# when p is 0.5, logit is 
 
 
 ```
@@ -192,6 +229,9 @@ I use `expand_grid()` instead of `tibble()` when making the data frame of predic
 ```{r}
 #| label: plot-class-best-estimate
 
+ggplot(class_model_pred, aes(x = pctpov, y = p)) +
+  geom_line() +
+  ylim(0,1)
 
 
 ```
@@ -209,6 +249,29 @@ When constructing the 95% CI for $p$, one thing remains the same and one thing h
 ```{r}
 #| label: predict-class-model-ci
 
+class_model_se <- predict(object = class_model, 
+                          newdata = pred_grid, 
+                          type = "link", #stay in link space!
+                          se.fit = TRUE) # get the SE of the fit 
+
+# Go from link space to response space 
+linkinv <- family(class_model)$linkinv
+class_model_pred <- pred_grid %>% 
+  mutate(
+    # get logit(p)
+    logit_p = class_model_se$fit, 
+    # 95% CI in link space 
+    logit_p_se = class_model_se$se.fit, 
+    logit_p_lwr = qnorm(0.025, mean = logit_p, sd = logit_p_se), 
+    logit_p_upr = qnorm(0.975, mean = logit_p, sd = logit_p_se), 
+    # undo the link function using linkinv
+    p = linkinv(logit_p), 
+    p_lwr = linkinv(logit_p_lwr), 
+    p_upr = linkinv(logit_p_upr)
+  )
+
+# Linkinv is going from logit(p) to just (p)
+
 
 
 ```
@@ -218,6 +281,9 @@ And here's the fit with the 95% CI presented as the familiar ribbon.
 ```{r}
 #| label: plot-class-ci
 
+ggplot(class_model_pred, aes(x= pctpov, y = p)) +
+  geom_ribbon(aes(ymin = p_lwr, ymax = p_upr), alpha = 0.2) +
+  geom_line()
 
 
 ```
@@ -244,9 +310,95 @@ Switzer and Teodoro demonstrated that the *interaction* between race and class i
 5.  Plot the predictions. In your plot, put `pcthisp` on the x-axis and probability of SDWA violations on the y-axis. Indicate `pctpov` using color and fill. To make this work, you'll have to filter your predictions to a few levels of `pctpov` (e.g., 0, 25, 50, and 75).
 
 ```{r}
-#| label: your-turn
+#| label: 1 & 2: Create model and summary
+
+inter_model <- glm(violation ~ pctpov * pcthisp, # glm(response ~ predictor)
+                   data = df, # data remains unchanged
+                   family = binomial(link = "logit")) # family and link function 
+# summary of model
+
+inter_model_sum <- summary(inter_model)
+
+# coefficients
+coef_pctpov <- inter_model_sum$coefficients[1]
+coef_pcthisp <- inter_model_sum$coefficients[2]
+
+# 95 % CI 
+print(confint(inter_model)["pcthisp", ])
 
 
+#Is the interaction between class and race significantly different than 0?
+inter_model_sum$coefficients["pctpov", 4] # yes
+inter_model_sum$coefficients["pcthisp", 4] # yes
+
+
+```
+
+```{r}
+#| label: 3 -5: Predictor grid, generate predictions
+
+inter_grid <- expand_grid(pctpov = 0:100, pcthisp = 0:100) 
+p <- 
+  
+# what is happening here: p is the probability of a violation with the combination of pctpov and pcthisp, 
+
+
+# Generate predictions 
+inter_mod_pred <- inter_grid %>% 
+  mutate(p = predict(object = inter_model, 
+                     newdata = inter_grid, 
+                     type = "response")) 
+
+#Generate predictions, including both the best estimate and 95% CI.
+
+glm_sum <- summary(class_model)
+coef_pctpov <- glm_sum$coefficients[2]
+
+
+```
+
+```{r}
+#| label: plot 
+
+# Use link to generate 
+
+# store the standard errors for the inter_grid df, need ot use link to linearize it 
+inter_model_se <- predict(object = inter_model, 
+                          newdata = inter_grid, 
+                          type = "link", #stay in link space!
+                          se.fit = TRUE) # get the SE of the fit 
+
+
+# Go from link space to response space 
+linkinv <- family(inter_model)$linkinv 
+
+inter_model_pred <- inter_grid %>% 
+  mutate(
+    # get logit(p)
+    logit_p = inter_model_se$fit, 
+    # 95% CI in link space 
+    logit_p_se = inter_model_se$se.fit, 
+    logit_p_lwr = qnorm(0.025, mean = logit_p, sd = logit_p_se), 
+    logit_p_upr = qnorm(0.975, mean = logit_p, sd = logit_p_se), 
+    # undo the link function using linkinv
+    p = linkinv(logit_p), 
+    p_lwr = linkinv(logit_p_lwr), 
+    p_upr = linkinv(logit_p_upr)
+  )
+
+ 
+```
+
+```{r}
+
+inter_model_filtered <- inter_model_pred %>% 
+  filter(pctpov %in% c(0,25,50,75)) # if you see these numbers, take them out 
+
+ggplot(inter_model_filtered, aes(x = pcthisp, y = p)) +
+  geom_line(aes(color = as_factor(pctpov))) +
+  geom_ribbon(aes(ymin = p_lwr, ymax = p_upr, fill = as_factor(pctpov)), alpha = 0.2)
+
+#Plot the predictions. In your plot, put pcthisp on the x-axis and probability of SDWA violations on the y-axis. Indicate pctpov using color and fill. To make this work, you'll have to filter your predictions to a few levels of pctpov (e.g., 0, 25, 50, and 75)
 
 ```
 
